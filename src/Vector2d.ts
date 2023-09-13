@@ -23,8 +23,17 @@ class Vector2d {
         return new Vector2d(this.x * value, this.y * value);
     }
 
+    scaleInPlace(value: number) : void {
+        this.x *= value;
+        this.y *= value;
+    }
+
     length(): number {
         return Math.sqrt(this.x * this.x + this.y * this.y);
+    }
+
+    dotProduct(other: Vector2d) {
+        return this.x * other.x + this.y * other.y;
     }
 }
 
