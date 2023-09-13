@@ -4,7 +4,7 @@ import { Vector3d } from "./Vector3d.js";
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls';
 
-const RADIUS = 10;
+const RADIUS = 20;
 const CONTAINER_RADIUS = Math.min(window.innerWidth, window.innerHeight) / 2;
 const OBJECT_COLOR = "#55dd55";
 const OBJECT_COUNT = 2000;
@@ -26,7 +26,7 @@ function drawObjects() {
     objects.forEach(obj => {
         if (!obj.target) {
             const geometry = new THREE.SphereGeometry(obj.radius);
-            const material = new THREE.MeshBasicMaterial({ color: obj.color });
+            const material = new THREE.MeshPhongMaterial({ color: obj.color });
             const sphere = new THREE.Mesh(geometry, material);
             scene.add(sphere, );
             obj.target = sphere;
@@ -86,6 +86,13 @@ function init() {
     const edges = new THREE.EdgesGeometry(geometry); 
     const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial( { color: 0xffffff } ) ); 
     scene.add( line );
+
+    const light = new THREE.HemisphereLight(0xffffbb, 0x080820, 1.0);
+    scene.add( light );
+
+    const pointLight = new THREE.PointLight( 0xffffff, 50, 0, 0 );
+    pointLight.position.set( solver.width / 2, solver.height * 2, solver.depth / 3 );
+    scene.add( pointLight );
 
     camera.position.set(solver.width / 2, solver.height / 2, solver.depth * 1.5);
 

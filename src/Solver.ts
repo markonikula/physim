@@ -2,11 +2,11 @@ import { Vector3d } from "./Vector3d.js";
 import { SimObject } from "./SimObject.js";
 import { ProximityGrid } from "./ProximityGrid.js";
 
-const GRAVITY = new Vector3d(0, -10.0, 0.0);
-const WALL_DAMPENING = 0.98;
+const GRAVITY = new Vector3d(0, -100.0, 0.0);
+const WALL_DAMPENING = 0.8;
 const POSITIONAL_CORRECTION = 0.1;
-const RESTITUTION = 0.98;
-const DRAG = 0.999;
+const RESTITUTION = 0.8;
+const DRAG = 0.998;
 
 class Solver {
     objects: Array<SimObject>;
