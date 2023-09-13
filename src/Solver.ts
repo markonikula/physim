@@ -1,8 +1,8 @@
-import { Vector2d } from "./Vector2d.js";
+import { Vector3d } from "./Vector3d.js";
 import { SimObject } from "./SimObject.js";
 import { ProximityGrid } from "./ProximityGrid.js";
 
-const GRAVITY = new Vector2d(0, 10.0);
+const GRAVITY = new Vector3d(0, -10.0, 0.0);
 const WALL_DAMPENING = 0.98;
 const POSITIONAL_CORRECTION = 0.1;
 const RESTITUTION = 0.98;
@@ -12,11 +12,13 @@ class Solver {
     objects: Array<SimObject>;
     width: number;
     height: number;
+    depth: number;
 
-    constructor(objects: Array<SimObject>, width, height) {
+    constructor(objects: Array<SimObject>, width, height, depth) {
         this.objects = objects;
         this.width = width;
         this.height = height;
+        this.depth = depth;
     }
 
     update(dt: number) {
@@ -56,6 +58,14 @@ class Solver {
             if (obj.position.y + obj.radius > this.height) {
                 obj.position.y = this.height - obj.radius;
                 obj.velocity.y = -obj.velocity.y * WALL_DAMPENING;
+            }
+            if (obj.position.z - obj.radius < 0) {
+                obj.position.z = obj.radius;
+                obj.velocity.z = -obj.velocity.z * WALL_DAMPENING;
+            }
+            if (obj.position.z + obj.radius > this.height) {
+                obj.position.z = this.depth - obj.radius;
+                obj.velocity.z = -obj.velocity.z * WALL_DAMPENING;
             }
         });
     }

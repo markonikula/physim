@@ -1,17 +1,18 @@
-import { Vector2d } from "./Vector2d.js";
+import { Vector3d } from "./Vector3d.js";
 
 class SimObject {
-    position: Vector2d;
-    velocity: Vector2d;
-    acceleration: Vector2d;
+    position: Vector3d;
+    velocity: Vector3d;
+    acceleration: Vector3d;
     radius: number;
     color: string;
     inverseOfMass: number;
+    target: object;
 
-    constructor(position: Vector2d, velocity: Vector2d, radius: number, color: string) {
+    constructor(position: Vector3d, velocity: Vector3d, radius: number, color: string) {
         this.position = position;
         this.velocity = velocity;
-        this.acceleration = new Vector2d(0, 0);
+        this.acceleration = new Vector3d(0, 0, 0);
         this.radius = radius;
         this.color = color;
         this.inverseOfMass = 1 / (Math.PI * radius * radius);
@@ -23,9 +24,10 @@ class SimObject {
         this.velocity = this.velocity.add(this.acceleration.scale(dt));
         this.acceleration.x = 0;
         this.acceleration.y = 0;
+        this.acceleration.z = 0;
     }
 
-    accelerate(acc: Vector2d) {
+    accelerate(acc: Vector3d) {
         this.acceleration = this.acceleration.add(acc);
     }
 }
