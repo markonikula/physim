@@ -2,20 +2,16 @@ import { SimObject } from "./SimObject.js";
 import { Solver } from "./Solver.js";
 import { Vector2d } from "./Vector2d.js";
 
-const RADIUS = 5;
+const RADIUS = 6;
 const CONTAINER_RADIUS = Math.min(window.innerWidth, window.innerHeight) / 2;
 const OBJECT_COLOR = "#55dd55";
-const OBJECT_COUNT = 1000;
-const INITIAL_VELOCITY = 50;
+const OBJECT_COUNT = 2000;
+const INITIAL_VELOCITY = RADIUS * 10;
 const INITIAL_X = window.innerWidth * 0.48;
 const INITIAL_Y = window.innerHeight * 0.3;
 const DT = 0.1;
 
-
-const objects = [
-    new SimObject(new Vector2d(window.innerWidth / 2, 600), new Vector2d(0, 0), 50, "green"),
-    new SimObject(new Vector2d(window.innerWidth / 2 + 80, 200), new Vector2d(0, 0), 50, "green")
-];
+const objects = [];
 
 const solver = new Solver(objects, window.innerWidth, window.innerHeight);
 

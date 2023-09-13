@@ -1,8 +1,9 @@
 import { Vector2d } from "./Vector2d.js";
 import { SimObject } from "./SimObject.js";
+import { ProximityGrid } from "./ProximityGrid.js";
 
-const GRAVITY = new Vector2d(0, 2.0);
-const WALL_DAMPENING = 0.99;
+const GRAVITY = new Vector2d(0, 10.0);
+const WALL_DAMPENING = 0.98;
 const POSITIONAL_CORRECTION = 0.1;
 const RESTITUTION = 0.98;
 const DRAG = 0.999;
@@ -60,37 +61,37 @@ class Solver {
     }
 
     solveCollisions() {
-        const n = this.objects.length;
-        for (var i = 0; i < n - 1; i++) {
-            for (var j = i + 1; j < n; j++) {
-                const obj1 = this.objects[i];
-                const obj2 = this.objects[j];
-                const axis = obj1.position.minus(obj2.position);
-                const dist = axis.length();
-                const minDist = obj1.radius + obj2.radius;
-                if (dist < minDist) {
-                    const normal = axis.scale(1 / dist);
-                    // Adapted from https://code.tutsplus.com/how-to-create-a-custom-2d-physics-engine-the-basics-and-impulse-resolution--gamedev-6331t
-                    // Calculate relative velocity 
-                    const rv = obj1.velocity.minus(obj2.velocity);
-                    // Calculate relative velocity in terms of the normal direction 
-                    const velocityAlongNormal = rv.dotProduct(normal);
-                    // Do not resolve if velocities are separating
-                    if (velocityAlongNormal <= 0) {
-                        // Calculate impulse scale
-                        const impulseScale = (-(1 + RESTITUTION) * velocityAlongNormal) / (obj1.inverseOfMass + obj2.inverseOfMass);
-                        // Apply impulse 
-                        const impulse = normal.scale(impulseScale);
-                        obj1.velocity = obj1.velocity.add(impulse.scale(obj1.inverseOfMass));
-                        obj2.velocity = obj2.velocity.minus(impulse.scale(obj2.inverseOfMass));
-                    }
+       const pg = new ProximityGrid(this.objects);
+       pg.forEachCandidatePair((obj1, obj2) => this.solvePair(obj1, obj2));
+    }
 
-                    // Apply positional correction
-                    const delta = minDist - dist;
-                    obj1.position = obj1.position.add(normal.scale(POSITIONAL_CORRECTION * delta));
-                    obj2.position = obj2.position.minus(normal.scale(POSITIONAL_CORRECTION * delta));
-                }
+    solvePair(obj1: SimObject, obj2: SimObject) {
+        if (!obj1 || !obj2) return;
+
+        const axis = obj1.position.minus(obj2.position);
+        const dist = axis.length();
+        const minDist = obj1.radius + obj2.radius;
+        if (dist < minDist) {
+            const normal = axis.scale(1 / dist);
+            // Adapted from https://code.tutsplus.com/how-to-create-a-custom-2d-physics-engine-the-basics-and-impulse-resolution--gamedev-6331t
+            // Calculate relative velocity 
+            const rv = obj1.velocity.minus(obj2.velocity);
+            // Calculate relative velocity in terms of the normal direction 
+            const velocityAlongNormal = rv.dotProduct(normal);
+            // Do not resolve if velocities are separating
+            if (velocityAlongNormal <= 0) {
+                // Calculate impulse scale
+                const impulseScale = (-(1 + RESTITUTION) * velocityAlongNormal) / (obj1.inverseOfMass + obj2.inverseOfMass);
+                // Apply impulse 
+                const impulse = normal.scale(impulseScale);
+                obj1.velocity = obj1.velocity.add(impulse.scale(obj1.inverseOfMass));
+                obj2.velocity = obj2.velocity.minus(impulse.scale(obj2.inverseOfMass));
             }
+
+            // Apply positional correction
+            const delta = minDist - dist;
+            obj1.position = obj1.position.add(normal.scale(POSITIONAL_CORRECTION * delta));
+            obj2.position = obj2.position.minus(normal.scale(POSITIONAL_CORRECTION * delta));
         }
     }
 }
