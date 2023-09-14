@@ -8,6 +8,17 @@ const POSITIONAL_CORRECTION = 0.1;
 const RESTITUTION = 0.8;
 const DRAG = 0.998;
 
+
+function computeTimeToCollision1d(distance: number, velocity: number, acceleration: number) {
+    // Compute time to collision with the given speed and acceleration, along a single axis.
+    if (distance <= 0) {
+        return 0;
+    }
+    var averageVelocity = -velocity + 0.5 * Math.sqrt(2 * -acceleration * distance);
+    return distance / averageVelocity;
+}
+
+
 class Solver {
     objects: Array<SimObject>;
     width: number;
@@ -22,11 +33,11 @@ class Solver {
     }
 
     update(dt: number) {
+        this.updatePositions(dt);
+        this.applyWallConstraints(dt);
+        this.solveCollisions();
         this.applyGravity();
         this.applyDrag();
-        this.applyWallConstraints();
-        this.solveCollisions();
-        this.updatePositions(dt);
     }
 
     updatePositions(dt: number) {
@@ -41,7 +52,7 @@ class Solver {
         this.objects.forEach(obj => obj.velocity.scaleInPlace(DRAG));
     }
 
-    applyWallConstraints() {
+    applyWallConstraints(dt) {
         this.objects.forEach(obj => {
             if (obj.position.x - obj.radius < 0) {
                 obj.position.x = obj.radius;
@@ -52,8 +63,16 @@ class Solver {
                 obj.velocity.x = -obj.velocity.x * WALL_DAMPENING;
             }
             if (obj.position.y - obj.radius < 0) {
-                obj.position.y = obj.radius;
-                obj.velocity.y = -obj.velocity.y * WALL_DAMPENING;
+                var previousVelocity = obj.velocity.y - dt * GRAVITY.y;
+                var previousStep = previousVelocity * dt + GRAVITY.y * 0.5 * dt * dt
+                var previousHeight = (obj.position.y - obj.radius) - previousStep;
+                var timeToCollision = computeTimeToCollision1d(previousHeight, previousVelocity, GRAVITY.y);
+                var collisionVelocity = previousVelocity + timeToCollision * GRAVITY.y;
+                var bounceVelocity = -collisionVelocity * WALL_DAMPENING + (dt - timeToCollision) * GRAVITY.y;
+                //bounceVelocity = Math.max(0, bounceVelocity);
+                obj.velocity.y = bounceVelocity;
+                obj.position.y = obj.radius + obj.velocity.y * (dt - timeToCollision);
+                //obj.position.y = Math.max(0, obj.position.y);
             }
             if (obj.position.y + obj.radius > this.height) {
                 obj.position.y = this.height - obj.radius;

@@ -4,10 +4,10 @@ import { Vector3d } from "./Vector3d.js";
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls';
 
-const RADIUS = 20;
+const RADIUS = 30;
 const CONTAINER_RADIUS = Math.min(window.innerWidth, window.innerHeight) / 2;
 const OBJECT_COLOR = "#55dd55";
-const OBJECT_COUNT = 2000;
+const OBJECT_COUNT = 5;
 const INITIAL_VELOCITY = RADIUS * 10;
 const INITIAL_X = window.innerWidth * 0.48;
 const INITIAL_Y = window.innerHeight * 0.7;
