@@ -2,6 +2,8 @@ import { SimObject } from "./SimObject";
 
 const NAIVE_IMPL = false;
 
+console.log("Using naive proximity impl: " + NAIVE_IMPL);
+
 function generateCombinations(array1: Array<SimObject>, array2: Array<SimObject>, callback: (obj1: SimObject, obj2: SimObject) => void) {
     if (array1 === array2) {
         const n = array1.length;
@@ -23,8 +25,17 @@ function generateCombinations(array1: Array<SimObject>, array2: Array<SimObject>
     }
 }
 
+function getCell(cells: Array<Array<Array<Array<SimObject>>>>, x: number, y: number, z: number): Array<SimObject> {
+    const a1 = cells[x];
+    if (!a1) return [];
+    const a2 = a1[y];
+    if (!a2) return [];
+    const a3 = a2[z];
+    return a3 || [];
+}
+
 class ProximityGrid {
-    cells: Array<Array<Array<SimObject>>>;
+    cells: Array<Array<Array<Array<SimObject>>>>;
     objects: Array<SimObject>;
 
     constructor(objects: Array<SimObject>) {
@@ -40,13 +51,11 @@ class ProximityGrid {
         objects.forEach(obj => {
             const xCell = Math.floor(obj.position.x / cellSize);
             const yCell = Math.floor(obj.position.y / cellSize);
-            var cell = this.cells[xCell];
-            if (cell === undefined) {
-                cell = [];
-                this.cells[xCell] = cell;
-            }
-            cell[yCell] ||= [];
-            cell[yCell].push(obj);
+            const zCell = Math.floor(obj.position.z / cellSize);
+            var xxx = (this.cells[xCell] ||= []);
+            var yyy = (xxx[yCell] ||= []);
+            var zzz = (yyy[zCell] ||= []);
+            zzz.push(obj);
         });
     }
 
@@ -57,21 +66,30 @@ class ProximityGrid {
         }
         const xLen = this.cells.length;
         for (var x = 0; x < xLen; x++) {
-            const row1 = this.cells[x] || [];
-            const row2 = this.cells[x + 1] || [];
-            const yLen = row1.length;
+            const xxx = this.cells[x] || [];
+            const yLen = xxx.length;
             for (var y = 0; y < yLen; y++) {
-                const cell1 = row1[y] || [];
-                const cell2 = row1[y + 1] || [];
-                const cell3 = row2[y] || [];
-                const cell4 = row2[y + 1] || [];
-                const cell5 = row2[y - 1] || [];
+                const yyy = xxx[y] || [];
+                const zLen = yyy.length;
+                for (var z = 0; z < zLen; z++) {
+                    const zzz = yyy[z] || [];
 
-                generateCombinations(cell1, cell1, callback);
-                generateCombinations(cell1, cell2, callback);
-                generateCombinations(cell1, cell3, callback);
-                generateCombinations(cell1, cell4, callback);
-                generateCombinations(cell1, cell5, callback);
+                    // In 3d, each cell has 26 neighbours (3*3*3-1 = 26).
+                    // We cover half of them here, the other half are considered "from the other side".
+
+                    generateCombinations(zzz, zzz, callback);
+                    generateCombinations(zzz, getCell(this.cells, x, y, z), callback);
+                    generateCombinations(zzz, getCell(this.cells, x, y + 1, z), callback);
+                    generateCombinations(zzz, getCell(this.cells, x + 1, y, z), callback);
+                    generateCombinations(zzz, getCell(this.cells, x + 1, y + 1, z), callback);
+                    generateCombinations(zzz, getCell(this.cells, x + 1, y - 1, z), callback);
+
+                    for (var i = -1; i <= 1; i++) {
+                        for (var j = -1; j <= 1; j++) {
+                            generateCombinations(zzz, getCell(this.cells, x + i, y + j, z + 1), callback);
+                        }
+                    }
+                }
             }
         }
     }
