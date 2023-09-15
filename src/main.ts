@@ -1,18 +1,20 @@
 import { SimObject } from "./SimObject.js";
 import { Solver } from "./Solver.js";
 import { Vector3d } from "./Vector3d.js";
+import { Logger } from './Logger.js';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls';
 
-const RADIUS = 30;
+const logger = new Logger();
+const RADIUS = 20;
 const CONTAINER_RADIUS = Math.min(window.innerWidth, window.innerHeight) / 2;
 const OBJECT_COLOR = "#55dd55";
-const OBJECT_COUNT = 5;
+const OBJECT_COUNT = 5000;
 const INITIAL_VELOCITY = RADIUS * 10;
 const INITIAL_X = window.innerWidth * 0.48;
 const INITIAL_Y = window.innerHeight * 0.7;
 const INITIAL_Z = window.innerHeight * 0.5;
-const DT = 0.1;
+const DT = 0.05;
 
 const objects = [];
 const solver = new Solver(objects, window.innerWidth, window.innerHeight, window.innerHeight);
@@ -21,12 +23,11 @@ const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerH
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize( window.innerWidth, window.innerHeight );
 
-
 function drawObjects() {
     objects.forEach(obj => {
         if (!obj.target) {
-            const geometry = new THREE.SphereGeometry(obj.radius);
-            const material = new THREE.MeshPhongMaterial({ color: obj.color });
+            const geometry = (new THREE.BufferGeometry()).copy(new THREE.SphereGeometry(obj.radius));
+            const material = new THREE.MeshLambertMaterial({ color: obj.color });
             const sphere = new THREE.Mesh(geometry, material);
             scene.add(sphere, );
             obj.target = sphere;
@@ -61,7 +62,7 @@ function loop() {
         );
         const color = `hsl(${objects.length % 360}, 80%, 50%)`;
         const { z0: gaussian, z1: _ } = boxMullerTransform();
-        const radius = Math.max(RADIUS / 2, RADIUS * gaussian * 0.5 + RADIUS);
+        const radius = RADIUS; //Math.max(RADIUS / 2, RADIUS * gaussian * 0.5 + RADIUS);
         objects.push(
             new SimObject(new Vector3d(INITIAL_X, INITIAL_Y, INITIAL_Z), velocity, radius, color)
         );
@@ -73,7 +74,7 @@ function loop() {
     drawObjects();
     renderer.render(scene, camera);
     const t3 = Date.now();
-    console.log(`${objects.length} objects, solver ${t2 - t1} ms, drawing ${t3 - t2} ms`);
+    logger.log(`${objects.length} objects, solver ${t2 - t1} ms, drawing ${t3 - t2} ms`);
 }
 
 function init() {

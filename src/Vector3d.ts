@@ -35,6 +35,10 @@ class Vector3d {
         return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
     }
 
+    lengthSquared(): number {
+        return this.x * this.x + this.y * this.y + this.z * this.z;
+    }
+
     dotProduct(other: Vector3d) {
         return this.x * other.x + this.y * other.y + this.z * other.z;
     }

@@ -98,9 +98,10 @@ class Solver {
         if (!obj1 || !obj2) return;
 
         const axis = obj1.position.minus(obj2.position);
-        const dist = axis.length();
+        const distSquared = axis.lengthSquared();
         const minDist = obj1.radius + obj2.radius;
-        if (dist < minDist) {
+        if (distSquared < minDist ** 2) {
+            const dist = Math.sqrt(distSquared);
             const normal = axis.scale(1 / dist);
             // Adapted from https://code.tutsplus.com/how-to-create-a-custom-2d-physics-engine-the-basics-and-impulse-resolution--gamedev-6331t
             // Calculate relative velocity 
