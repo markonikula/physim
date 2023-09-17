@@ -6,10 +6,10 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls';
 
 const logger = new Logger();
-const RADIUS = 20;
+const RADIUS = 10;
 const CONTAINER_RADIUS = Math.min(window.innerWidth, window.innerHeight) / 2;
 const OBJECT_COLOR = "#55dd55";
-const OBJECT_COUNT = 5000;
+const OBJECT_COUNT = 10000;
 const INITIAL_VELOCITY = RADIUS * 10;
 const INITIAL_X = window.innerWidth * 0.48;
 const INITIAL_Y = window.innerHeight * 0.7;
@@ -23,21 +23,24 @@ const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerH
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize( window.innerWidth, window.innerHeight );
 
+const geometry = new THREE.SphereGeometry(RADIUS);
+const material = new THREE.MeshLambertMaterial({ color: 'green' });
+const mesh = new THREE.InstancedMesh( geometry, material, OBJECT_COUNT );
+mesh.instanceMatrix.setUsage( THREE.DynamicDrawUsage ); // will be updated every frame
+scene.add( mesh );
+
+const dummy = new THREE.Object3D();
+
+
 function drawObjects() {
-    objects.forEach(obj => {
-        if (!obj.target) {
-            const geometry = (new THREE.BufferGeometry()).copy(new THREE.SphereGeometry(obj.radius));
-            const material = new THREE.MeshLambertMaterial({ color: obj.color });
-            const sphere = new THREE.Mesh(geometry, material);
-            scene.add(sphere, );
-            obj.target = sphere;
-        }
-        obj.target.position.set(
-            obj.position.x - solver.width / 2, 
-            obj.position.y - solver.height / 2, 
-            obj.position.z - solver.depth / 2
-        );
+    objects.forEach((obj, i) => {
+        dummy.position.set( obj.position.x - solver.width/2, obj.position.y - solver.height/2, obj.position.z-solver.depth/2 );
+        dummy.updateMatrix();
+        mesh.setMatrixAt( i, dummy.matrix );
     });
+
+    mesh.instanceMatrix.needsUpdate = true;
+    mesh.computeBoundingSphere();
 }
 
 // From https://mika-s.github.io/javascript/random/normal-distributed/2019/05/15/generating-normally-distributed-random-numbers-in-javascript.html
@@ -51,10 +54,8 @@ function boxMullerTransform() {
     return { z0, z1 };
 }
 
-function loop() {
-    requestAnimationFrame(loop);
-
-    if (objects.length < OBJECT_COUNT) {
+function createObjects() {
+    while (objects.length < OBJECT_COUNT) {
         const velocity = new Vector3d(
             INITIAL_VELOCITY * Math.cos(objects.length * 0.1), 
             INITIAL_VELOCITY * Math.sin(objects.length * 0.1),
@@ -67,9 +68,15 @@ function loop() {
             new SimObject(new Vector3d(INITIAL_X, INITIAL_Y, INITIAL_Z), velocity, radius, color)
         );
     }
+}
+
+var iteration = 0;
+
+function loop() {
+    requestAnimationFrame(loop);
 
     const t1 = Date.now();
-    solver.update(DT);
+    solver.update(DT, iteration++);
     const t2 = Date.now();
     drawObjects();
     renderer.render(scene, camera);
@@ -79,6 +86,8 @@ function loop() {
 
 function init() {
     console.log("Init");
+
+    createObjects();
 
     document.body.appendChild(renderer.domElement);
     camera.position.z = 1000;
