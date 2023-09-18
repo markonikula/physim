@@ -1,12 +1,13 @@
 import { SimObject } from "./SimObject.js";
 import { Solver } from "./Solver.js";
+import { SimData } from "./SimData.js";
 import { Vector3d } from "./Vector3d.js";
 import { Logger } from './Logger.js';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls';
 
 const logger = new Logger();
-const RADIUS = 10;
+const RADIUS = 12;
 const CONTAINER_RADIUS = Math.min(window.innerWidth, window.innerHeight) / 2;
 const OBJECT_COLOR = "#55dd55";
 const OBJECT_COUNT = 10000;
@@ -16,7 +17,7 @@ const INITIAL_Y = window.innerHeight * 0.7;
 const INITIAL_Z = window.innerHeight * 0.5;
 const DT = 0.05;
 
-const objects = [];
+const objects = new SimData(OBJECT_COUNT, RADIUS);
 const solver = new Solver(objects, window.innerWidth, window.innerHeight, window.innerHeight);
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 10000);
@@ -33,10 +34,14 @@ const dummy = new THREE.Object3D();
 
 
 function drawObjects() {
-    objects.forEach((obj, i) => {
-        dummy.position.set( obj.position.x - solver.width/2, obj.position.y - solver.height/2, obj.position.z-solver.depth/2 );
+    objects.forEach((data, index) => {
+        dummy.position.set(
+            data.getX(index) - solver.width/2,
+            data.getY(index) - solver.height/2,
+            data.getZ(index) - solver.depth/2
+        );
         dummy.updateMatrix();
-        mesh.setMatrixAt( i, dummy.matrix );
+        mesh.setMatrixAt(index, dummy.matrix);
     });
 
     mesh.instanceMatrix.needsUpdate = true;
@@ -55,18 +60,16 @@ function boxMullerTransform() {
 }
 
 function createObjects() {
-    while (objects.length < OBJECT_COUNT) {
-        const velocity = new Vector3d(
-            INITIAL_VELOCITY * Math.cos(objects.length * 0.1), 
-            INITIAL_VELOCITY * Math.sin(objects.length * 0.1),
-            INITIAL_VELOCITY * Math.sin(objects.length * 0.1)
-        );
-        const color = `hsl(${objects.length % 360}, 80%, 50%)`;
-        const { z0: gaussian, z1: _ } = boxMullerTransform();
+    for (var i = 0; i < OBJECT_COUNT; i++) {
+        //const color = `hsl(${i % 360}, 80%, 50%)`;
+        //const { z0: gaussian, z1: _ } = boxMullerTransform();
         const radius = RADIUS; //Math.max(RADIUS / 2, RADIUS * gaussian * 0.5 + RADIUS);
-        objects.push(
-            new SimObject(new Vector3d(INITIAL_X, INITIAL_Y, INITIAL_Z), velocity, radius, color)
-        );
+        objects.setX(i, INITIAL_X + Math.random() * 100);
+        objects.setY(i, INITIAL_Y + Math.random() * 100);
+        objects.setZ(i, INITIAL_Z + Math.random() * 100);
+        objects.setVelocityX(i, INITIAL_VELOCITY * Math.cos(i * 0.1));
+        objects.setVelocityY(i, INITIAL_VELOCITY * Math.sin(i * 0.1));
+        objects.setVelocityZ(i, INITIAL_VELOCITY * Math.sin(i * 0.1));
     }
 }
 
@@ -81,7 +84,7 @@ function loop() {
     drawObjects();
     renderer.render(scene, camera);
     const t3 = Date.now();
-    logger.log(`${objects.length} objects, solver ${t2 - t1} ms, drawing ${t3 - t2} ms`);
+    logger.log(`${OBJECT_COUNT} objects, solver ${t2 - t1} ms, drawing ${t3 - t2} ms`);
 }
 
 function init() {

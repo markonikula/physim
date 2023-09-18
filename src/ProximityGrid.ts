@@ -1,5 +1,6 @@
 import { SimObject } from "./SimObject";
 import { Logger } from './Logger.js';
+import { SimData } from "./SimData";
 
 const NAIVE_IMPL = false;
 const EMPTY_ARRAY = [];
@@ -7,7 +8,7 @@ const logger = new Logger();
 
 console.log("Using naive proximity impl: " + NAIVE_IMPL);
 
-function generateCombinations(array1: Array<SimObject>, array2: Array<SimObject>, callback: (obj1: SimObject, obj2: SimObject) => void): number {
+function generateCombinations(array1: Array<number>, array2: Array<number>, callback: (obj1: number, obj2: number) => void): number {
     if (!array1 || !array2) return 0;
     var count = 0;
     if (array1 === array2) {
@@ -23,7 +24,7 @@ function generateCombinations(array1: Array<SimObject>, array2: Array<SimObject>
             for (var j = 0; j < array2.length; j++) {
                 var o1 = array1[i];
                 var o2 = array2[j];
-                if (o1 && o2 && o1 !== o2) {
+                if (o1 !== o2) {
                     callback(o1, o2);
                     count++;
                 }
@@ -33,7 +34,7 @@ function generateCombinations(array1: Array<SimObject>, array2: Array<SimObject>
     return count;
 }
 
-function getCell(cells: Array<Array<Array<Array<SimObject>>>>, x: number, y: number, z: number): Array<SimObject> {
+function getCell(cells: Array<Array<Array<Array<number>>>>, x: number, y: number, z: number): Array<number> {
     const a1 = cells[x];
     if (!a1) return EMPTY_ARRAY;
     const a2 = a1[y];
@@ -43,10 +44,10 @@ function getCell(cells: Array<Array<Array<Array<SimObject>>>>, x: number, y: num
 }
 
 class ProximityGrid {
-    cells: Array<Array<Array<Array<SimObject>>>>;
-    objects: Array<SimObject>;
+    cells: Array<Array<Array<Array<number>>>>;
+    objects: SimData;
 
-    constructor(objects: Array<SimObject>) {
+    constructor(objects: SimData) {
         this.cells = [];
         this.objects = objects;
 
@@ -56,22 +57,22 @@ class ProximityGrid {
         });
         const cellSize = maxRadius * 2.01;
 
-        objects.forEach(obj => {
-            const xCell = Math.floor(obj.position.x / cellSize);
-            const yCell = Math.floor(obj.position.y / cellSize);
-            const zCell = Math.floor(obj.position.z / cellSize);
+        objects.forEach((data, index) => {
+            const xCell = Math.floor(data.getX(index) / cellSize);
+            const yCell = Math.floor(data.getY(index) / cellSize);
+            const zCell = Math.floor(data.getZ(index) / cellSize);
             var xxx = (this.cells[xCell] ||= []);
             var yyy = (xxx[yCell] ||= []);
             var zzz = (yyy[zCell] ||= []);
-            zzz.push(obj);
+            zzz.push(index);
         });
     }
 
-    forEachCandidatePair(callback: (obj1: SimObject, obj2: SimObject) => void) {
-        if (NAIVE_IMPL) {
-            generateCombinations(this.objects, this.objects, callback);
-            return;
-        }
+    forEachCandidatePair(callback: (obj1: number, obj2: number) => void) {
+        //if (NAIVE_IMPL) {
+        //    generateCombinations(this.objects, this.objects, callback);
+        //    return;
+        //}
         var nonEmptyCellCount = 0;
         var pairCount = 0;
         const xLen = this.cells.length;
