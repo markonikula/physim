@@ -1,13 +1,13 @@
-import { SimObject } from "./SimObject.js";
 import { Solver } from "./Solver.js";
 import { SimData } from "./SimData.js";
-import { Vector3d } from "./Vector3d.js";
 import { Logger } from './Logger.js';
+import { AuxScene } from "./AuxScene.js";
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls';
 
 const logger = new Logger();
 const RADIUS = 12;
+const RADIUS_RENDER_FACTOR = 2.5;
 const CONTAINER_RADIUS = Math.min(window.innerWidth, window.innerHeight) / 2;
 const OBJECT_COLOR = "#55dd55";
 const OBJECT_COUNT = 10000;
@@ -24,8 +24,17 @@ const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerH
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize( window.innerWidth, window.innerHeight );
 
-const geometry = new THREE.SphereGeometry(RADIUS);
-const material = new THREE.MeshLambertMaterial({ color: 'green' });
+
+const material = new THREE.ShaderMaterial({
+	uniforms: {
+		time: { value: 1.0 },
+		resolution: { value: new THREE.Vector2() }
+	},
+	vertexShader: document.getElementById( 'vertexShader' ).textContent,
+	fragmentShader: document.getElementById( 'fragmentShader' ).textContent
+});
+const geometry = new THREE.SphereGeometry(RADIUS * RADIUS_RENDER_FACTOR);
+//const material = new THREE.MeshLambertMaterial({ color: 0xaaeeff });
 const mesh = new THREE.InstancedMesh( geometry, material, OBJECT_COUNT );
 mesh.instanceMatrix.setUsage( THREE.DynamicDrawUsage ); // will be updated every frame
 scene.add( mesh );
@@ -74,6 +83,12 @@ function createObjects() {
 }
 
 var iteration = 0;
+const auxScene = new AuxScene("vertexShader_screen", "fragmentShader_screen");
+const blurScene = new AuxScene(
+    "vertexShader_screen",
+    "fragmentShader_zBlur",
+    { xs: { value: window.innerWidth }, ys: { value: window.innerHeight }, r: { value: 10 } }
+);
 
 function loop() {
     requestAnimationFrame(loop);
@@ -82,7 +97,17 @@ function loop() {
     solver.update(DT, iteration++);
     const t2 = Date.now();
     drawObjects();
+
+    renderer.setRenderTarget(blurScene.buffer);
     renderer.render(scene, camera);
+
+    renderer.setRenderTarget(auxScene.buffer);
+    //renderer.setRenderTarget(null);
+    renderer.render(blurScene.scene, blurScene.camera);
+
+    renderer.setRenderTarget(null);
+    renderer.render(auxScene.scene, auxScene.camera);
+
     const t3 = Date.now();
     logger.log(`${OBJECT_COUNT} objects, solver ${t2 - t1} ms, drawing ${t3 - t2} ms`);
 }
@@ -95,19 +120,19 @@ function init() {
     document.body.appendChild(renderer.domElement);
     camera.position.z = 1000;
 
-    const geometry = new THREE.BoxGeometry(solver.width, solver.height, solver.depth); 
-    const edges = new THREE.EdgesGeometry(geometry); 
-    const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial( { color: 0xffffff } ) ); 
-    scene.add( line );
+    //const geometry = new THREE.BoxGeometry(solver.width, solver.height, solver.depth);
+    //const edges = new THREE.EdgesGeometry(geometry);
+    //const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial( { color: 0xffffff } ) );
+    //scene.add( line );
 
     const light = new THREE.HemisphereLight(0xffffbb, 0x080820, 1.0);
     scene.add( light );
 
-    const pointLight = new THREE.PointLight( 0xffffff, 50, 0, 0 );
-    pointLight.position.set( solver.width / 2, solver.height * 2, solver.depth / 3 );
+    const pointLight = new THREE.PointLight( 0xffffff, 4, 0, 0 );
+    pointLight.position.set( solver.width / 2, -solver.height * 2, solver.depth / 3 );
     scene.add( pointLight );
 
-    camera.position.set(solver.width / 2, solver.height / 2, solver.depth * 1.5);
+    camera.position.set(0, solver.height / 2.5, solver.depth * 1.8);
 
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.update();
