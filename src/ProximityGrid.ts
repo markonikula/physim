@@ -36,11 +36,11 @@ function generateCombinations(array1: Array<number>, array2: Array<number>, call
 
 function getCell(cells: Array<Array<Array<Array<number>>>>, x: number, y: number, z: number): Array<number> {
     const a1 = cells[x];
-    if (!a1) return EMPTY_ARRAY;
+    if (!a1) return null;
     const a2 = a1[y];
-    if (!a2) return EMPTY_ARRAY;
+    if (!a2) return null;
     const a3 = a2[z];
-    return a3 || EMPTY_ARRAY;
+    return a3;
 }
 
 class ProximityGrid {
@@ -66,6 +66,23 @@ class ProximityGrid {
             var zzz = (yyy[zCell] ||= []);
             zzz.push(index);
         });
+    }
+
+    forEach(callback: (index: number) => void) {
+        const xLen = this.cells.length;
+        for (var x = 0; x < xLen; x++) {
+            const xxx = this.cells[x] || [];
+            const yLen = xxx.length;
+            for (var y = 0; y < yLen; y++) {
+                const yyy = xxx[y] || [];
+                const zLen = yyy.length;
+                for (var z = 0; z < zLen; z++) {
+                    const zzz = yyy[z];
+                    if (!zzz) continue;
+                    zzz.forEach(callback);
+                }
+            }
+        }
     }
 
     forEachCandidatePair(callback: (obj1: number, obj2: number) => void) {

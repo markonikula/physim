@@ -33,11 +33,9 @@ class Solver {
     }
 
     update(dt: number, iteration: number) {
-        this.objects.forEach((data, index) => {
-            data.updatePosition(index, dt);
-        });
+        this.objects.updatePositions(dt);
         this.applyWallConstraints(dt, iteration);
-        this.solveCollisions();
+        this.solveCollisions(iteration);
     }
 
     applyWallConstraints(dt, iteration: number) {
@@ -86,9 +84,12 @@ class Solver {
         });
     }
 
-    solveCollisions() {
-       const pg = new ProximityGrid(this.objects);
-       pg.forEachCandidatePair((obj1, obj2) => this.solvePair(obj1, obj2));
+    solveCollisions(iteration: number) {
+        const pg = new ProximityGrid(this.objects);
+        //if (iteration % 100 == 0) {
+        //    this.objects.optimizeLocality(pg);
+        //}
+        pg.forEachCandidatePair((obj1, obj2) => this.solvePair(obj1, obj2));
     }
 
     solvePair(obj1: number, obj2: number) {
