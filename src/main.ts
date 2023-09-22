@@ -6,8 +6,8 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls';
 
 const logger = new Logger();
-const RADIUS = 12;
-const RADIUS_RENDER_FACTOR = 2.5;
+const RADIUS = 8;
+const RADIUS_RENDER_FACTOR = 1.5;
 const CONTAINER_RADIUS = Math.min(window.innerWidth, window.innerHeight) / 2;
 const OBJECT_COLOR = "#55dd55";
 const OBJECT_COUNT = 10000;
@@ -18,12 +18,22 @@ const INITIAL_Z = window.innerHeight * 0.5;
 const DT = 0.05;
 
 const objects = new SimData(OBJECT_COUNT, RADIUS);
-const solver = new Solver(objects, window.innerWidth, window.innerHeight, window.innerHeight);
+const solver = new Solver(objects, window.innerWidth * 0.6, window.innerHeight, window.innerHeight * 0.7);
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 10000);
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize( window.innerWidth, window.innerHeight );
 
+const backgroundTexture = new THREE.CubeTextureLoader()
+	.setPath( './images/' )
+	.load([
+		'posx.jpg',
+		'negx.jpg',
+		'posy.jpg',
+		'negy.jpg',
+		'posz.jpg',
+		'negz.jpg'
+	]);
 
 const material = new THREE.ShaderMaterial({
 	uniforms: {
@@ -83,11 +93,24 @@ function createObjects() {
 }
 
 var iteration = 0;
-const auxScene = new AuxScene("vertexShader_screen", "fragmentShader_screen");
+const bgTarget = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight);
+const bgScene = new THREE.Scene();
+bgScene.background = backgroundTexture;
+
 const blurScene = new AuxScene(
     "vertexShader_screen",
     "fragmentShader_zBlur",
     { xs: { value: window.innerWidth }, ys: { value: window.innerHeight }, r: { value: 10 } }
+);
+const auxScene = new AuxScene(
+    "vertexShader_screen",
+    "fragmentShader_screen",
+    {
+        background: { value: backgroundTexture },
+        cameraMatrix: { value: camera.projectionMatrixInverse },
+        worldMatrix: { value: camera.matrixWorld },
+        realCameraPosition: { value: camera.position }
+    }
 );
 
 function loop() {
@@ -98,6 +121,9 @@ function loop() {
     const t2 = Date.now();
     drawObjects();
 
+    //renderer.setRenderTarget(bgTarget);
+    //renderer.render(bgScene, camera);
+
     renderer.setRenderTarget(blurScene.buffer);
     renderer.render(scene, camera);
 
@@ -106,6 +132,10 @@ function loop() {
     renderer.render(blurScene.scene, blurScene.camera);
 
     renderer.setRenderTarget(null);
+    camera.updateProjectionMatrix();
+    auxScene.uniforms.cameraMatrix.value = camera.projectionMatrixInverse;
+    auxScene.uniforms.worldMatrix.value = camera.matrixWorld;
+    auxScene.uniforms.realCameraPosition.value = camera.position;
     renderer.render(auxScene.scene, auxScene.camera);
 
     const t3 = Date.now();

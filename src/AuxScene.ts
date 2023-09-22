@@ -11,6 +11,7 @@ class AuxScene {
         10000
     );
     buffer: THREE.WebGLRenderTarget;
+    uniforms: any;
 
     constructor(vertexShaderName: string, fragmentShaderName: string, parameters = {}) {
         const light1 = new THREE.DirectionalLight(0xffffff, 3);
@@ -31,10 +32,10 @@ class AuxScene {
         this.buffer.depthBuffer = true;
         this.buffer.depthTexture = new THREE.DepthTexture(window.innerWidth, window.innerHeight);
 
-        const uniforms = { buffer: { value: this.buffer.texture }, ...parameters };
+        this.uniforms = { buffer: { value: this.buffer.texture }, ...parameters };
         //console.log(uniforms);
-        const materialScreen = new THREE.ShaderMaterial({
-            uniforms: uniforms,
+        const material = new THREE.ShaderMaterial({
+            uniforms: this.uniforms,
             vertexShader: document.getElementById(vertexShaderName).textContent,
             fragmentShader: document.getElementById(fragmentShaderName).textContent,
             //vertexShader: document.getElementById('vertexShader_screen').textContent,
@@ -44,7 +45,7 @@ class AuxScene {
 
         const plane = new THREE.PlaneGeometry(window.innerWidth, window.innerHeight);
 
-        const quad = new THREE.Mesh(plane, materialScreen);
+        const quad = new THREE.Mesh(plane, material);
         quad.position.z = -100;
         this.scene.add(quad);
     }

@@ -1,8 +1,8 @@
 import { ProximityGrid } from "./ProximityGrid";
 
 const VALUES = 3;
-const GRAVITY = -200;
-const DRAG = 1.0;
+const GRAVITY = -300;
+const DRAG = 0.999;
 
 class SimData {
     count: number;

@@ -47,7 +47,7 @@ class ProximityGrid {
     cells: Array<Array<Array<Array<number>>>>;
     objects: SimData;
 
-    constructor(objects: SimData) {
+    constructor(objects: SimData, cellFactor: number) {
         this.cells = [];
         this.objects = objects;
 
@@ -55,7 +55,7 @@ class ProximityGrid {
         objects.forEach(obj => {
             maxRadius = Math.max(maxRadius, obj.radius);
         });
-        const cellSize = maxRadius * 2.01;
+        const cellSize = maxRadius * cellFactor;
 
         objects.forEach((data, index) => {
             const xCell = Math.floor(data.getX(index) / cellSize);
