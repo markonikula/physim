@@ -1,20 +1,20 @@
 import { ProximityGrid } from "./ProximityGrid";
 
-const VALUES = 3;
+const VALUES = 4;  // One extra to make it compatible with RGBA format
 const GRAVITY = -300;
 const DRAG = 0.999;
 
 class SimData {
     count: number;
     radius: number;
-    pos: Float64Array;
-    vel: Float64Array;
+    pos: Float32Array;
+    vel: Float32Array;
 
     constructor(count, radius) {
         this.count = count;
         this.radius = radius;
-        this.pos = new Float64Array(count * VALUES);
-        this.vel = new Float64Array(count * VALUES);
+        this.pos = new Float32Array(count * VALUES);
+        this.vel = new Float32Array(count * VALUES);
     }
 
     forEach(func: ((data: SimData, index: number) => void)) {

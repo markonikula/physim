@@ -42,7 +42,7 @@ class Solver {
     update(dt: number, iteration: number) {
         this.objects.updatePositions(dt);
         this.applyWallConstraints(dt, iteration);
-        this.solveCollisions(iteration);
+        //this.solveCollisions(iteration);
     }
 
     applyWallConstraints(dt, iteration: number) {

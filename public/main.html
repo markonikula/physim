@@ -195,5 +195,75 @@
 				#include <colorspace_fragment>
             }
         </script>
+
+        <script id="vertexShader_solver" type="x-shader/x-vertex">
+			precision highp float;
+			in vec3 position;
+			in vec2 uv;
+			in vec4 color;
+            out vec2 uvPos;
+
+			uniform mat4 modelViewMatrix;
+			uniform mat4 projectionMatrix;
+
+			void main()	{
+                uvPos = uv;
+				gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+			}
+        </script>
+
+        <script id="fragmentShader_solver" type="x-shader/x-fragment">
+            precision highp float;
+
+            in vec2 uvPos;
+            uniform float count;
+            uniform float radius;
+            uniform float dt;
+            uniform float textureW;
+            uniform float textureH;
+            uniform sampler2D positions;
+            uniform sampler2D velocities;
+
+            layout(location = 0) out vec4 newPosition;
+			layout(location = 1) out vec4 newVelocity;
+
+            void main()	{
+                vec2 uv = uvPos;
+                vec3 pos = texture(positions, uv).xyz;
+                vec3 vel = texture(velocities, uv).xyz;
+                vec2 size = vec2(textureW, textureH);
+                vec2 step = 1.0 / size;
+                vec3 newPos = pos;
+                vec3 newVel = vel;
+                float minDist = radius * 2.0;
+
+                for (float x = step.x / 2.0; x < 1.0; x += step.x) {
+                    for (float y = step.y / 2.0; y < 1.0; y += step.y) {
+                        if (x != uv.x || y != uv.y) {
+                            vec3 otherPos = texture(positions, vec2(x, y)).xyz;
+                            float dist = distance(pos, otherPos);
+                            if (dist < minDist) {
+                                vec3 axis = pos - otherPos;
+                                vec3 normal = normalize(axis);
+                                vec3 otherVel = texture(velocities, vec2(x, y)).xyz;
+                                vec3 rv = vel - otherVel;
+                                float velocityAlongNormal = dot(rv, normal);
+                                if (velocityAlongNormal <= 0.0) {
+                                    float scale = -0.2 * velocityAlongNormal;
+                                    vec3 impulse = normal * scale;
+                                    newVel += impulse;
+                                }
+
+                                float delta = minDist - dist;
+                                newPos += (normal * delta * 0.2);
+                            }
+                        }
+                    }
+                }
+
+                newPosition = vec4(newPos, 1.0);
+                newVelocity = vec4(newVel, 1.0);
+            }
+        </script>
     </body>
 </html>

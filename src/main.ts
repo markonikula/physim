@@ -4,13 +4,14 @@ import { Logger } from './Logger.js';
 import { AuxScene } from "./AuxScene.js";
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls';
+import { GpuSolver } from "./GpuSolver.js";
 
 const logger = new Logger();
-const RADIUS = 8;
-const RADIUS_RENDER_FACTOR = 1.5;
+const RADIUS = 5;
+const RADIUS_RENDER_FACTOR = 1.0;
 const CONTAINER_RADIUS = Math.min(window.innerWidth, window.innerHeight) / 2;
 const OBJECT_COLOR = "#55dd55";
-const OBJECT_COUNT = 10000;
+const OBJECT_COUNT = 20000;
 const INITIAL_VELOCITY = RADIUS * 10;
 const INITIAL_X = window.innerWidth * 0.48;
 const INITIAL_Y = window.innerHeight * 0.7;
@@ -112,6 +113,7 @@ const auxScene = new AuxScene(
         realCameraPosition: { value: camera.position }
     }
 );
+const gpuSolver = new GpuSolver(objects, solver.width, solver.height, solver.depth, DT);
 
 function loop() {
     requestAnimationFrame(loop);
@@ -119,6 +121,8 @@ function loop() {
     const t1 = Date.now();
     solver.update(DT, iteration++);
     const t2 = Date.now();
+    gpuSolver.solve(DT, iteration);
+    const t3 = Date.now();
     drawObjects();
 
     //renderer.setRenderTarget(bgTarget);
@@ -138,8 +142,8 @@ function loop() {
     auxScene.uniforms.realCameraPosition.value = camera.position;
     renderer.render(auxScene.scene, auxScene.camera);
 
-    const t3 = Date.now();
-    logger.log(`${OBJECT_COUNT} objects, solver ${t2 - t1} ms, drawing ${t3 - t2} ms`);
+    const t4 = Date.now();
+    logger.log(`${OBJECT_COUNT} objects, update ${t2 - t1} ms, solver ${t3 - t2} ms, drawing ${t4 - t3} ms`);
 }
 
 function init() {
